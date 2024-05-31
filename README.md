@@ -1,1 +1,1 @@
-# SportsStore
+SportsStore is a Flask-based web application designed for showcasing and managing a dynamic inventory of sports products. It features an intuitive interface for both customers and administrators, providing functionalities such as product browsing, search, and management. This repository contains the main application setup, route definitions, and the necessary configurations to run the app in debug mode for development purposes.
