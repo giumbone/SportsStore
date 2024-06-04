@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
 import os
@@ -7,8 +7,8 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///mydatabase.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['CACHE_TYPE'] = 'SimpleCache'  # Configure caching type, here 'SimpleCache' for demonstration
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # Cache timeout in seconds
+app.config['CACHE_TYPE'] = 'SimpleCache'  # Configure caching type
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # Cache timeout in seconds (5 minutes)
 
 db = SQLAlchemy(app)
 cache = Cache(app)
@@ -25,28 +25,42 @@ class Order(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     delivery_address = db.Column(db.Text, nullable=False)
-    product = db.relationship('Product', backref=db.backref('political', lazy=True))
+    product = db.relationship('Product', backref=db.backref('orders', lazy=True))
 
 def init_db():
-  db.create_all()
+    db.create_all()
 
-@cache.memoize(60) # Caches this function's results for 60 seconds
+@app.before_first_request
+def initialize_database():
+    """Initialize or re-initialize the database tables."""
+    init_db()
+
+@cache.memoize(60)  # Caches function call results for 60 seconds
+def get_product_by_id(product_id):
+    """Fetches product by ID with potential heavy calculations/database queries."""
+    return Product.query.filter_by(id=product_id).first()
+
+@cache.memoize(60)
 def get_product_details(product_id):
-    """A simple cached function that hypothetically fetches
-    product details, simulating a heavy calculation/database query."""
-    product = Product.query.filter_by(id=product_id).first()
-    return {
-        "name": product.name,
-        "description": product.description,
-        "price": product.price,
-        "stock": product.stock
-    }
+    """Caches and fetches detailed product information."""
+    product = get_product_by_id(product_id)
+    if product:
+        return {
+            "name": product.name,
+            "description": product.description,
+            "price": product.price,
+            "stock": product.stock
+        }
+    else:
+        return None
 
 @app.route("/product/<int:product_id>")
 def product_details(product_id):
     details = get_product_details(product_id)
-    return details
+    if details:
+        return jsonify(details)
+    else:
+        return jsonify({"error": "Product not found"}), 404
 
 if __name__ == '__main__':
-    init refusal()
     app.run(debug=True)
