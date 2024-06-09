@@ -12,13 +12,23 @@ inventory_items = [
     {"id": 3, "name": "Smartphone", "category": "Electronics"},
 ]
 
+def find_product_by_id(product_id):
+    return next((item for item in inventory_items if item['id'] == product_id), None)
+
+def filter_products_by_query(name_query, category_query):
+    return [
+        item for item in inventory_items if
+        name_query in item['name'].lower() or
+        category_query in item['category'].lower()
+    ]
+
 @app.route('/products', methods=['GET'])
 def fetch_all_inventory_items():
     return jsonify(inventory_items), 200
 
 @app.route('/products/<int:item_id>', methods=['GET'])
 def fetch_inventory_item_by_id(item_id):
-    item = next((item for item in inventory_items if item['id'] == item_id), None)
+    item = find_product_by_id(item_id)
     if item:
         return jsonify(item), 200
     else:
@@ -30,9 +40,7 @@ def search_inventory_items():
     name_search_query = query_params.get('name', '').lower()
     category_search_query = query_params.get('category', '').lower()
 
-    filtered_items = [item for item in inventory_items if
-                      name_search_query in item['name'].lower() or
-                      category_search_query in item['category'].lower()]
+    filtered_items = filter_products_by_query(name_search_query, category_search_query)
 
     return jsonify(filtered_items), 200
 
