@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter as Router,
   Switch,
@@ -15,6 +15,19 @@ interface Product {
   name: string;
   price: number;
   description: string;
+}
+
+const cache: { [key: string]: any } = {};
+
+async function fetchWithCache(url: string) {
+  if (cache[url]) {
+    console.log('Returning from cache:', url);
+    return cache[url];
+  }
+  const response = await fetch(url);
+  const data = await response.json();
+  cache[url] = data;
+  return data;
 }
 
 const Header: React.FC = () => {
@@ -38,13 +51,12 @@ const Header: React.FC = () => {
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
-  async function fetchProducts() {
-    const response = await fetch(`${API_URL}/products`);
-    const data = await response.json();
-    setProducts(data);
-  }
+  useEffect(() => {
+    async function fetchProducts() {
+      const data = await fetchWithCache(`${API_URL}/products`);
+      setProducts(data);
+    }
 
-  React.useEffect(() => {
     fetchProducts();
   }, []);
 
@@ -66,13 +78,12 @@ const ProductList: React.FC = () => {
 const ProductDetails = ({ match }: {match: any}) => {
   const [product, setProduct] = useState<Product | null>(null);
 
-  async function fetchProduct() {
-    const response = await fetch(`${API_URL}/products/${match.params.id}`);
-    const data = await response.json();
-    setProduct(data);
-  }
+  useEffect(() => {
+    async function fetchProduct() {
+      const data = await fetchWithCache(`${API_URL}/products/${match.params.id}`);
+      setProduct(data);
+    }
 
-  React.useEffect(() => {
     fetchProduct();
   }, [match.params.id]);
 
@@ -115,7 +126,7 @@ const App: React.FC = () => {
         <Switch>
           <Route path="/" exact component={ProductList} />
           <Route path="/product/:id" component={ProductDetails} />
-          <Route path="/cart" component={ShoppingCart} />
+          <Route path="/zcart" component={ShoppingCart} />
           <Route path="/checkout" component={Checkout} />
         </Switch>
       </div>
