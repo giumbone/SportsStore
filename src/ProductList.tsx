@@ -8,14 +8,30 @@ type Product = {
   price: number;
 };
 
+// Simple in-memory cache
+const cache: { [url: string]: Product[] } = {};
+
 const ProductsGrid: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products`);
+      const url = `${process.env.REACT_APP_BACKEND_URL}/products`;
+
+      // Check cache first
+      if (cache[url]) {
+        setProducts(cache[url]);
+        return;
+      }
+
+      const response = await axios.get(url);
+
+      // Save to cache
+      cache[url] = response.data;
+
       setProducts(response.data);
     };
+
     fetchProducts();
   }, []);
 
@@ -34,4 +50,4 @@ const ProductsGrid: React.FC = () => {
   );
 };
 
-export default Products Slate
+export default Products 
