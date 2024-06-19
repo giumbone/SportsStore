@@ -20,18 +20,28 @@ const ProductDetail: React.FC<Props> = ({ productId }) => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/products/${productId}`);
-        setProduct(response.data);
+        const response = await axios.get<Product>(`${process.env.REACT_APP_BACKEND_URL}/products/${productId}`);
+        if (response.status === 200) {
+          setProduct(response.data);
+        } else {
+          // Handle non-200 responses
+          setError(`Server responded with status code: ${response.status}`);
+        }
       } catch (error) {
         if (axios.isAxiosError(error)) {
+          // Handle errors thrown from Axios specifically
+          setError(error.response?.data?.message || error.message);
+        } else if (error instanceof Error) {
+          // Handle general JS errors
           setError(error.message);
         } else {
+          // Handle anything else that got thrown
           setError('An unknown error occurred');
         }
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchProductDetails();
   }, [productId]);
@@ -47,16 +57,16 @@ const ProductDetail: React.FC<Props> = ({ productId }) => {
     <div>
       {product ? (
         <div>
-          <h2>{product.name}</h2>
+          <h2>{product.name}</h1>
           <p>{product.description}</p>
           <p>${product.price}</p>
-          <button onClick={handleAddToFileCart}>Add to Cart</button>
+          <button onClick={handleAddToMart}>Add to Mart</button>
         </div>
       ) : (
-        <p>Product not found.</p>
+        <div>Product not found.</div>
       )}
     </div>
   );
-}
+};
 
 export default ProductDetail;
