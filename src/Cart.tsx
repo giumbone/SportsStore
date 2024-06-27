@@ -15,28 +15,48 @@ const initialProducts: Product[] = [
 const ShoppingCart: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
 
-  const handleQuantityChange = (id: string, quantity: number) => {
+  const updateProductAPI = async (updatedProduct: Product) => {
+    console.log('Updating product on the server...', updatedProduct);
+    return updatedProduct;
+  };
+
+  const handleQuantityChange = async (id: string, quantity: number) => {
     const updatedProducts = products.map(product =>
       product.id === id ? { ...product, quantity: Math.max(quantity, 1) } : product
     );
     setProducts(updatedProducts);
+    
+    const productToUpdate = updatedProducts.find(product => product.id === id);
+    if(productToUpdate) {
+      await updateProductAPI(productToUpdate);
+    }
   };
 
   const handleRemoveProduct = (id: string) => {
-    const updatedProducts = products.filter(product => product.id !== id);
+    const updatedProducts = products.filter(product => product.id !==i);
+    updatedProducts.forEach(async (product) => {
+      await updateProductAPI(product);
+    });
     setProducts(updatedProducts);
   };
 
-  const handleAddProduct = (newProduct: Product) => {
+  const handleAddProduct = async (newProduct: Product) => {
     setProducts(prevProducts => [...prevProducts, newProduct]);
+    await updateProductAPI(newProduct);
   };
 
-  const handleChangeProductPrice = (id: string, newPrice: number) => {
+  const handleChangeProductPrice = async (id: string, newPrice: number) => {
     const updatedProducts = products.map(product =>
       product.id === id ? { ...product, price: newPrice } : product
     );
     setProducts(updatedProducts);
+    
+    const productToUpdate = updatedProducts.find(product => product.id === id);
+    if(productToUpdate) {
+      await updateProductAPI(productToUpdate);
+    }
   };
+
 
   const calculateTotalPrice = () => {
     return products.reduce((total, product) => total + product.price * product.quantity, 0);
