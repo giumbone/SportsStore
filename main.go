@@ -17,7 +17,7 @@ type Order struct {
 
 func loadEnv() {
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file:", err)
 	}
 }
 
@@ -28,7 +28,7 @@ func getDBConnection() (*sql.DB, error) {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME")))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 	return db, nil
 }
@@ -43,9 +43,39 @@ func validateStock(db *sql.DB, productID, quantity int) bool {
 }
 
 func updateStock(db *sql.DB, productID, quantity int) error {
-	_, err := db.Exec("UPDATE products SET stock = stock - ? WHERE id = ?", quantity, productID)
-	return err
+	if _, err := db.Exec("UPDATE products SET stock = stock - ? WHERE id = ?", quantity, productID); err != nil {
+		return fmt.Errorf("failed to update stock: %w", err)
+	}
+	return nil
 }
 
 func confirmOrder(order Order) (bool, error) {
-	db, err := getDBCT
+	db, err := getDBConnection()
+	if err != nil {
+		return false, fmt.Errorf("error getting DB connection: %w", err)
+	}
+	defer db.Close()
+
+	if !validateStock(db, order.ProductID, order.Quantity) {
+		return false, nil
+	}
+
+	if err := updateStock(db, order.ProductID, order.Quantity); err != nil {
+		return false, fmt.Errorf("error updating stock: %w", err)
+	}
+
+	return true, nil
+}
+
+func main() {
+	order := Order{ProductID: 1, Quantity: 2}
+	success, err := confirmOrder(order)
+	if err != nil {
+		log.Fatalf("Order confirmation failed: %v", err)
+	}
+	if success {
+		fmt.Println("Order confirmed successfully")
+	} else {
+		fmt.Println("Order could not be confirmed due to insufficient stock")
+	}
+}
