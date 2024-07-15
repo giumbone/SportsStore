@@ -14,6 +14,12 @@ interface PaymentInformation {
   cvv: string;
 }
 
+interface FormErrors {
+    cardNumber?: string;
+    expiryDate?: string;
+    cvv?: string;
+}
+
 const CheckoutForm: React.FC = () => {
   const [deliveryAddress, setDeliveryAddress] = useState<DeliveryAddress>({
     name: '',
@@ -28,28 +34,24 @@ const CheckoutForm: React.FC = () => {
     cvv: '',
   });
 
-  const [errors, setErrors] = useState<PaymentInformation>({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-  });
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const validateForm = () => {
-    const errors: PaymentInformation = { cardNumber: '', expiryDate: '', cvv: '' };
+  const validateForm = (): boolean => {
+    const tmpErrors: FormErrors = {};
     if (!/^\d{16}$/.test(paymentInformation.cardNumber)) {
-      errors.cardNumber = 'Invalid card number';
+      tmpErrors.cardNumber = 'Invalid card number';
     }
 
     if (!/^\d{2}\/\d{2}$/.test(paymentInformation.expiryDate)) {
-      errors.expiryDate = 'Invalid expiry date format';
+      tmpErrors.expiryDate = 'Invalid expiry date format';
     }
 
     if (!/^\d{3}$/.test(paymentInformation.cvv)) {
-      errors.cvv = 'Invalid CVV';
+      tmpErrors.cvv = 'Invalid CVV';
     }
 
-    setErrors(errors);
-    return Object.values(errors).every((x) => x === '');
+    setErrors(tmpErrors);
+    return Object.keys(tmpErrors).length === 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, setState: React.Dispatch<React.SetStateAction<any>>) => {
@@ -80,7 +82,7 @@ const CheckoutForm: React.FC = () => {
       alert('Order has been submitted successfully!');
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('There was a problem submitting your order.');
+      alert('There was a problem submitting yourongoose.remove( order. Please try again later.');
     }
   };
 
@@ -104,7 +106,7 @@ const CheckoutForm: React.FC = () => {
             name={key}
             type={key === 'cvv' ? 'password' : 'text'}
             value={(paymentInformation as any)[key]}
-            onChange={(e) => handleChange(e, setPayment Scholarly Input>
+            onChange={(e) => handleChange(e, setPaymentInformation)}
             placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
             required
             style={errors[key] ? { borderColor: 'red' } : {}}
